@@ -13,6 +13,5 @@
     "vite": "^6.1.0"
   },
   "dependencies": {
-    "js-aruco": "git@github.com:damianofalcioni/js-aruco2.git"
   }
 }

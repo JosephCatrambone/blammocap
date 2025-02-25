@@ -4,6 +4,7 @@ import './style.css'
 // @ts-ignore
 import { AR } from './js-aruco2/src/aruco.ts';
 
+let cameraName: HTMLInputElement;
 let detectorSelector: HTMLSelectElement;
 let videoSourceSelector: HTMLSelectElement;
 let videoElement: HTMLVideoElement;
@@ -12,7 +13,9 @@ let context: CanvasRenderingContext2D;
 let imageData: ImageData;
 let pixels: Uint8Array = [];
 
-let detector: any;
+// Image processing and detectors:
+let socket: WebSocket = new WebSocket("ws://localhost:8080");
+let detector: AR.Detector;
 
 
 /*
@@ -35,6 +38,11 @@ export function initApp(app: HTMLDivElement) {
 	setCounter(0);
 	 */
 
+	cameraName = document.createElement("input");
+	cameraName.id = "cameraName";
+	cameraName.name = "Camera Name Input";
+	cameraName.type = "text";
+
 	//const detectorSelector: HTMLSelectElement = document.createElement("select");
 	detectorSelector = document.createElement("select");
 	detectorSelector.id = 'fiducialSelector';
@@ -44,7 +52,7 @@ export function initApp(app: HTMLDivElement) {
 	videoSourceSelector.id = 'cameraSelector';
 	videoSourceSelector.name = "Camera Selector";
 
-	videoElement = document.createElement('video');
+	videoElement = document.createElement("video");
 	videoElement.style.display = 'none'; // We only want to write video frames here, not show them.
 	videoElement.id = 'videoPreview';
 	videoElement.autoplay = true;
@@ -54,17 +62,26 @@ export function initApp(app: HTMLDivElement) {
 	videoElement.height = 480;
 
 	detector = new AR.Detector();
-	canvasElement = document.createElement('canvas');
+	canvasElement = document.createElement("canvas");
 	canvasElement.width = videoElement.width;
 	canvasElement.height = videoElement.height;
+
+	configureCameraNameInput(cameraName);
 
 	populateFiducialDetector(detectorSelector);
 
 	populateCameraSelector(videoSourceSelector, videoElement).then(() => {
-		app.appendChild(detectorSelector);
-		app.appendChild(videoSourceSelector);
-		app.appendChild(videoElement);
-		app.appendChild(canvasElement);
+		let outputs = document.createElement("div");
+		outputs.appendChild(videoElement);
+		outputs.appendChild(canvasElement);
+
+		let controls = document.createElement("div");
+		controls.appendChild(cameraName);
+		controls.appendChild(detectorSelector);
+		controls.appendChild(videoSourceSelector);
+
+		app.append(outputs);
+		app.appendChild(controls);
 
 		let ctx = canvasElement.getContext('2d');
 		if (ctx !== null) {
@@ -75,8 +92,19 @@ export function initApp(app: HTMLDivElement) {
 }
 
 
-function populateFiducialDetector(selector: HTMLSelectElement) {
+function configureCameraNameInput(nameInput: HTMLInputElement) {
+	nameInput.value = `Camera${Math.random()}`;
+}
 
+
+function populateFiducialDetector(selector: HTMLSelectElement) {
+	selector.onchange = null;
+	selector.onchange = (evt) => {
+		
+	}
+
+	// For each possible detector...
+	
 }
 
 
@@ -156,7 +184,19 @@ export function tick() {
 
 	context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
 	imageData = context.getImageData(0, 0, canvasElement.width, canvasElement.height);
-	var markers = detector.detect(imageData);
+	if (detector != null && socket != null) {
+		// Send frames immediately or send them as a worker?
+		var markers = detector.detect(imageData);
+		if (socket.readyState == WebSocket.OPEN) {
+			socket.send(JSON.stringify({
+				"cname": cameraName.value,
+				"timestamp": Date.now(),
+				"markers": markers,
+			}));
+		}
+		console.log(markers);
+	}
+	// Render debug?
 }
 
 
