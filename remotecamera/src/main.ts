@@ -1,4 +1,5 @@
 import './style.css'
+import { Frame, Detection } from './datamodels.ts';
 //import { setupCounter } from './counter.ts'
 //import { AR } from "./js-aruco2/src/aruco.js";
 // @ts-ignore
@@ -11,7 +12,6 @@ let videoElement: HTMLVideoElement;
 let canvasElement: HTMLCanvasElement;
 let context: CanvasRenderingContext2D;
 let imageData: ImageData;
-let pixels: Uint8Array = [];
 
 // Image processing and detectors:
 let socket: WebSocket = new WebSocket("ws://localhost:8080");
@@ -183,16 +183,32 @@ export function tick() {
 	requestAnimationFrame(tick);
 
 	context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+	let timestamp = Date.now(); // As soon as we capture it.
 	imageData = context.getImageData(0, 0, canvasElement.width, canvasElement.height);
+
 	if (detector != null && socket != null) {
 		// Send frames immediately or send them as a worker?
 		var markers = detector.detect(imageData);
 		if (socket.readyState == WebSocket.OPEN) {
-			socket.send(JSON.stringify({
-				"cname": cameraName.value,
-				"timestamp": Date.now(),
-				"markers": markers,
-			}));
+			let f: Frame = new Frame();
+			f.camera_name = cameraName.value;
+			f.timestamp = timestamp;
+			f.markers = [];
+			for (let i = 0; i < markers.length; i++) {
+				// This is all in the name of a conversion.  Would be nice to have a better/faster way to do it.
+				let m: Detection = {
+					id: markers[i].id,
+					hamming_distance: markers[i].hammingDistance,
+					corners: [
+						markers[i].corners[0],
+						markers[i].corners[1],
+						markers[i].corners[2],
+						markers[i].corners[3],
+					]
+				}
+				f.markers.push(m);
+			}
+			socket.send(JSON.stringify(f));
 		}
 		console.log(markers);
 	}

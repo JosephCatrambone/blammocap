@@ -1,0 +1,63 @@
+{
+  "$id": "protocol.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Frame",
+  "type": "object",
+  "properties": {
+	"camera_name": {
+	  "type": "string",
+	  "description": "A unique identifier for the camera."
+	},
+	"timestamp": {
+	  "type": "integer",
+	  "description": "The time when the frame was required.",
+	  "minimum": 0
+	},
+	"markers": {
+	  "type": "array",
+	  "items": [
+		{
+		  "$ref": "#/definitions/Detection"
+		}
+	  ]
+	},
+	"comment": {
+	  "type": "null"
+	}
+  },
+  "required": [
+	"camera_name",
+	"timestamp",
+	"markers"
+  ],
+  "definitions": {
+	"Detection": {
+	  "properties": {
+		"id": {
+		  "type": "integer"
+		},
+		"hamming_distance": {
+		  "type": "integer"
+		},
+		"corners": {
+		  "type": "array",
+		  "items": [
+			{
+			  "$ref": "#/definitions/Point"
+			}
+		  ]
+		}
+	  }
+	},
+	"Point": {
+	  "properties": {
+		"x": {
+		  "type": "integer"
+		},
+		"y": {
+		  "type": "integer"
+		}
+	  }
+	}
+  }
+}

@@ -1,1 +1,2 @@
+datamodel-code-generator  # For generating the TS files.
 websockets==15.0
