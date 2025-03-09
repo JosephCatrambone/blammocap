@@ -5,6 +5,7 @@ import { Frame, Detection } from './datamodels.ts';
 // @ts-ignore
 import { AR } from './js-aruco2/src/aruco.ts';
 
+let remoteName: HTMLInputElement;
 let cameraName: HTMLInputElement;
 let detectorSelector: HTMLSelectElement;
 let videoSourceSelector: HTMLSelectElement;
@@ -14,7 +15,7 @@ let context: CanvasRenderingContext2D;
 let imageData: ImageData;
 
 // Image processing and detectors:
-let socket: WebSocket = new WebSocket("ws://localhost:8080");
+let socket: WebSocket = new WebSocket("ws://localhost:8765");
 let detector: AR.Detector;
 
 
@@ -37,6 +38,11 @@ export function initApp(app: HTMLDivElement) {
 	element.addEventListener('click', () => setCounter(counter + 1))
 	setCounter(0);
 	 */
+  remoteName = document.createElement("input");
+  remoteName.id = "remoteName";
+  remoteName.name = "Remote Server Address";
+  remoteName.type = "text";
+  remoteName.value = "ws://localhost:8765"
 
 	cameraName = document.createElement("input");
 	cameraName.id = "cameraName";
@@ -76,6 +82,7 @@ export function initApp(app: HTMLDivElement) {
 		outputs.appendChild(canvasElement);
 
 		let controls = document.createElement("div");
+		controls.appendChild(remoteName);
 		controls.appendChild(cameraName);
 		controls.appendChild(detectorSelector);
 		controls.appendChild(videoSourceSelector);
@@ -94,6 +101,16 @@ export function initApp(app: HTMLDivElement) {
 
 function configureCameraNameInput(nameInput: HTMLInputElement) {
 	nameInput.value = `Camera${Math.random()}`;
+}
+
+
+function configureRemoteInput(inElem: HTMLInputElement) {
+  inElem.onchange = null;
+  inElemn.onchange = (evt) => {
+    let remote = evt.target!.value;
+    socket = new WebSocket(remote);    
+    console.log(`Opening connection to ${remote}`);
+  }
 }
 
 
@@ -209,8 +226,9 @@ export function tick() {
 				f.markers.push(m);
 			}
 			socket.send(JSON.stringify(f));
+		} else {
+		  console.log(markers);
 		}
-		console.log(markers);
 	}
 	// Render debug?
 }
