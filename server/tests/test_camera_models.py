@@ -29,3 +29,32 @@ class CameraModelTests(unittest.TestCase):
 		error = numpy.sum(numpy.abs(ext.to_matrix() - target))
 		print(f"Error: {error}")
 		assert numpy.allclose(ext.to_matrix(), target, 1e-4)
+
+
+def render_lookat_demo():
+	import numpy
+	from PIL import Image
+	import math
+	import cv2
+	w = 640
+	h = 480
+	points3d = numpy.array([
+		[0, 0, 0],
+		[-10, -10, 0],
+		[10, -10, 0],
+		[10, 10, 0],
+		[-10, 10, 0]
+	])
+	fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+	intr = CameraIntrinsics(image_width=w, image_height=h, focal_x=100, focal_y=100)
+	out = cv2.VideoWriter("test_anim.mp4", fourcc, 30, (w, h), True)
+	for i in range(0, 240):
+		extr = CameraExtrinsics.from_lookat(eye=[0, 100*math.sin(i/30), 100], lookat=[0, 0, 0], up=[0, 1, 0])
+		c = CameraModel(intrinsics=intr, extrinsics=extr)
+		pts = c.transform_points(points3d)
+		img = Image.new('RGB', (w, h))
+		for j in range(0, pts.shape[0]):
+			if 0 <= pts[j,0] < w and 0 <= pts[j,1] < h:
+				img.putpixel((int(pts[j,0]), int(pts[j,1])), (255, 0, 255))
+			out.write(numpy.asarray(img))
+	out.release
