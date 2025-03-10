@@ -5,7 +5,7 @@ import time
 
 from websockets.asyncio.server import serve
 
-from datamodels import Point, Detection, Frame 
+from data_models import Point, Detection, Frame 
 
 async def echo(websocket):
     async for message in websocket:
