@@ -20,8 +20,14 @@ class CameraIntrinsics:
         aspect_ratio = resolution_x/resolution_y
         return cls(focal_x=aspect_ratio*math.tan(fov))
 
+    def set_sensor_width(self, width_mm: float):
+        self.focal_x = width_mm / self.image_width
+
+    def set_sensor_height(self, height_mm: float):
+        self.focal_y = height_mm / self.image_height
+
     def to_matrix(self):
-        return numpy.array([[self.focal_x, 0, self.image_width/-2.0], [0.0, self.focal_y, self.image_height/-2.0], [0.0, 0.0, 1.0]])
+        return numpy.array([[self.focal_x, 0, self.image_width/2.0], [0.0, self.focal_y, self.image_height/2.0], [0.0, 0.0, 1.0]])
 
 
 @dataclass
@@ -79,8 +85,8 @@ class CameraModel:
         # Given a matrix of nx3, transform the points in accordance with the intrinsics and extrinsics.
         assert points.shape[1] == 3
         points = numpy.hstack((points, numpy.ones((points.shape[0], 1), dtype=points.dtype)))
-        points = (self.extrinsics.to_matrix() @ points.T)[0:3,:].T
-        points = self.intrinsics.to_matrix() @ points
+        points = points @ self.extrinsics.to_matrix().T  # nx4
+        points = points[:, 0:3] / points[:, 3:]  # nx3
+        points = points @ self.intrinsics.to_matrix().T # nx3
+        points = points[:, 0:2] / points[:, 2:] # nx2
         return points
-        points /= points[:,2]
-        return points[:,:2]
