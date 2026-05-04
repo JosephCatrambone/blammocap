@@ -8,31 +8,7 @@ import math
 # Dictionary to keep track of all empties
 empties = {}
 
-async def handle_websocket_data():
-	uri = "ws://your_websocket_server:port"
 
-	async with websockets.connect(uri) as websocket:
-		while True:
-			try:
-				# Receive data from websocket
-				data = await websocket.recv()
-				data = json.loads(data)
-
-				# Extract data
-				obj_id = data['id']
-				action = data['appear/disappear']
-				rotation = data['rotation']  # Assuming [x, y, z] in radians
-				translation = data['translation']  # Assuming [x, y, z]
-
-				# Handle the data in Blender's main thread
-				bpy.app.timers.register(
-					# Is this passed by reference?  Will this actually update?
-					lambda: update_empty(obj_id, action, rotation, translation)
-				)
-
-			except websockets.exceptions.ConnectionClosed:
-				print("Connection closed")
-				break
 
 def update_empty(obj_id, action, rotation, translation):
 	if action == "appear":
@@ -58,8 +34,8 @@ def update_empty(obj_id, action, rotation, translation):
 	return None
 
 # Start the WebSocket client
-def start_websocket_client():
-	asyncio.run(handle_websocket_data())
+#def start_websocket_client():
+	#asyncio.run(handle_websocket_data())
 
 # Register the WebSocket client as a modal operator
 class WebSocketOperator(bpy.types.Operator):
@@ -67,7 +43,7 @@ class WebSocketOperator(bpy.types.Operator):
 	bl_label = "WebSocket Operator"
 
 	def execute(self, context):
-		start_websocket_client()
+		#start_websocket_client()
 		return {'FINISHED'}
 
 # Register the operator
